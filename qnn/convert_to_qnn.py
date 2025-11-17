@@ -70,7 +70,7 @@ class QNNConverter:
 
         # Add quantization if requested
         if quantize:
-            print("⚠ Note: Quantization requires calibration data")
+            print("WARNING Note: Quantization requires calibration data")
             cmd.extend([
                 '--quantization_overrides', 'activation:16,weights:8',
                 '--use_per_channel_quantization'
@@ -87,13 +87,13 @@ class QNNConverter:
                 capture_output=True,
                 text=True
             )
-            print("✓ Conversion successful")
+            print("SUCCESS Conversion successful")
             print(result.stdout)
 
             return output_path
 
         except subprocess.CalledProcessError as e:
-            print(f"⚠ Conversion failed:")
+            print(f"WARNING Conversion failed:")
             print(e.stdout)
             print(e.stderr)
             raise
@@ -138,13 +138,13 @@ class QNNConverter:
                 capture_output=True,
                 text=True
             )
-            print("✓ Context binary generated successfully")
+            print("SUCCESS Context binary generated successfully")
             print(result.stdout)
 
             return output_path
 
         except subprocess.CalledProcessError as e:
-            print(f"⚠ Generation failed:")
+            print(f"WARNING Generation failed:")
             print(e.stdout)
             print(e.stderr)
             raise
@@ -174,7 +174,7 @@ Quantization Steps:
 
         # This would use QNN quantization tools
         # Actual implementation depends on QNN SDK version and requirements
-        print("⚠ Quantization requires calibration data and QNN quantization tools")
+        print("WARNING Quantization requires calibration data and QNN quantization tools")
         print("  Please refer to QNN SDK documentation for quantization workflow")
 
         return output_path
@@ -209,7 +209,7 @@ def create_qnn_config(output_path, backend='HTP', precision='fp16'):
     with open(output_path, 'w') as f:
         json.dump(config, f, indent=2)
 
-    print(f"✓ QNN config created: {output_path}")
+    print(f"SUCCESS QNN config created: {output_path}")
     return output_path
 
 
@@ -250,7 +250,7 @@ def main():
     try:
         converter = QNNConverter(qnn_sdk_path=args.qnn_sdk_path)
     except FileNotFoundError as e:
-        print(f"\n⚠ Error: {e}")
+        print(f"\nWARNING Error: {e}")
         print("\nPlease install Qualcomm Neural Network SDK:")
         print("  1. Download from: https://developer.qualcomm.com/software/qualcomm-neural-processing-sdk")
         print("  2. Extract and set environment variable:")
@@ -299,7 +299,7 @@ def main():
         print("  4. Implement custom ops if needed (see qnn/custom_ops/)")
 
     except Exception as e:
-        print(f"\n⚠ Conversion failed: {e}")
+        print(f"\nWARNING Conversion failed: {e}")
         print("\nTroubleshooting:")
         print("  - Check QNN SDK installation")
         print("  - Verify ONNX model compatibility")

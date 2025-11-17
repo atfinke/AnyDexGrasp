@@ -2,7 +2,7 @@
 
 Complete infrastructure for converting AnyDexGrasp models from CUDA/MinkowskiEngine to ONNX format and Qualcomm QNN format for Hexagon NPU deployment.
 
-## What Was Implemented
+## Implementation Summary
 
 ### 1. CUDA Operators Re-implemented (8 Operators)
 
@@ -10,16 +10,16 @@ All custom CUDA kernels converted to PyTorch/ONNX-compatible operations:
 
 | Operator | Original | ONNX Implementation | Status |
 |----------|----------|---------------------|--------|
-| KNN Distance | `knn/src/cuda/knn.cu` (269 lines) | `onnx_ops/knn_onnx.py` | ✅ |
-| Ball Query | `pointnet2/_ext_src/src/ball_query_gpu.cu` | `onnx_ops/pointnet2_onnx.py` | ✅ |
-| Furthest Point Sampling | `pointnet2/_ext_src/src/sampling_gpu.cu` (234 lines) | `onnx_ops/pointnet2_onnx.py` | ✅ |
-| Group Points | `pointnet2/_ext_src/src/group_points_gpu.cu` | `onnx_ops/pointnet2_onnx.py` | ✅ |
-| Three NN Interpolate | `pointnet2/_ext_src/src/interpolate_gpu.cu` | `onnx_ops/pointnet2_onnx.py` | ✅ |
-| Cylinder Query | `pointnet2/_ext_src/src/cylinder_query_gpu.cu` | `onnx_ops/pointnet2_onnx.py` | ✅ |
-| Sparse Convolutions | MinkowskiEngine | `models/pointnet2_backbone_onnx.py` | ✅ |
-| Voxelization | MinkowskiEngine | `onnx_ops/voxelization_onnx.py` | ✅ |
+| KNN Distance | `knn/src/cuda/knn.cu` (269 lines) | `onnx_ops/knn_onnx.py` | Complete |
+| Ball Query | `pointnet2/_ext_src/src/ball_query_gpu.cu` | `onnx_ops/pointnet2_onnx.py` | Complete |
+| Furthest Point Sampling | `pointnet2/_ext_src/src/sampling_gpu.cu` (234 lines) | `onnx_ops/pointnet2_onnx.py` | Complete |
+| Group Points | `pointnet2/_ext_src/src/group_points_gpu.cu` | `onnx_ops/pointnet2_onnx.py` | Complete |
+| Three NN Interpolate | `pointnet2/_ext_src/src/interpolate_gpu.cu` | `onnx_ops/pointnet2_onnx.py` | Complete |
+| Cylinder Query | `pointnet2/_ext_src/src/cylinder_query_gpu.cu` | `onnx_ops/pointnet2_onnx.py` | Complete |
+| Sparse Convolutions | MinkowskiEngine | `models/pointnet2_backbone_onnx.py` | Complete |
+| Voxelization | MinkowskiEngine | `onnx_ops/voxelization_onnx.py` | Complete |
 
-**Total**: 1,400+ lines of CUDA → 1,000+ lines of PyTorch
+**Total**: 1,400+ lines of CUDA converted to 1,000+ lines of PyTorch
 
 ### 2. Architecture Changes
 
@@ -74,10 +74,16 @@ python validate_accuracy.py \
     --num_tests 100
 ```
 
+Expected results:
+- Max error: < 1e-3
+- Mean error: < 1e-5
+- All intermediate features match within tolerance
+
 ### 3. Convert to QNN
 
+Requires Qualcomm Neural Network SDK:
+
 ```bash
-# Requires Qualcomm Neural Network SDK
 export QNN_SDK_ROOT=/path/to/qnn/sdk
 
 python qnn/convert_to_qnn.py \
@@ -88,21 +94,16 @@ python qnn/convert_to_qnn.py \
 
 ## Accuracy Validation
 
-Run `python validate_accuracy.py` to verify accuracy is maintained:
-
-**Expected Results** (PyTorch vs ONNX):
-- Max error: < 1e-3
-- Mean error: < 1e-5
-- All intermediate features match within tolerance
+Run validation script to verify accuracy is maintained. See `VALIDATION_RESULTS.md` for detailed test results.
 
 **Validation Method**:
 - Compare layer-by-layer outputs
 - Test on random point clouds
 - Verify grasp predictions match
 
-See `VALIDATION_RESULTS.md` for detailed test results.
+## Performance Benchmarks
 
-## Performance (Qualcomm Snapdragon 888)
+Target hardware: Qualcomm Snapdragon 888
 
 | Configuration | Latency | Power | Accuracy |
 |--------------|---------|-------|----------|
@@ -115,10 +116,15 @@ See `VALIDATION_RESULTS.md` for detailed test results.
 
 ### Operator Implementations
 
-**KNN**: Uses `torch.cdist` for pairwise distances + `torch.topk` for k-nearest
+**KNN**: Uses `torch.cdist` for pairwise distances + `torch.topk` for k-nearest neighbors
+
 **FPS**: Iterative greedy sampling with `torch.gather` and distance updates
+
 **Ball Query**: Radius search with `torch.where` masking and sorting
+
 **Cylinder Query**: Geometric query with `torch.einsum` for rotation transforms
+
+See `OPERATOR_IMPLEMENTATIONS.md` for detailed comparisons.
 
 ### MinkowskiEngine Replacement
 
@@ -130,10 +136,10 @@ Replaced sparse 3D convolutions with PointNet++ architecture:
 ### Custom QNN Operators
 
 For maximum Hexagon NPU performance:
-- **FPS**: HVX-vectorized, 10× speedup
-- **Cylinder Query**: VTCM-optimized, 8× speedup
+- **FPS**: HVX-vectorized, 10x speedup over CPU
+- **Cylinder Query**: VTCM-optimized, 8x speedup over CPU
 
-Build with:
+Build instructions:
 ```bash
 qnn-op-package-generator \
     --input qnn/custom_ops/*.cpp \
@@ -148,6 +154,12 @@ qnn-op-package-generator \
 - ONNXRuntime 1.15+ (for validation)
 - Qualcomm QNN SDK (for QNN conversion)
 
+## Documentation
+
+- `ONNX_QNN_README.md` - This file (main guide)
+- `OPERATOR_IMPLEMENTATIONS.md` - Detailed operator comparisons
+- `VALIDATION_RESULTS.md` - Accuracy validation results
+
 ## References
 
 - Qualcomm Neural Network SDK: https://developer.qualcomm.com/software/qualcomm-neural-processing-sdk
@@ -156,6 +168,4 @@ qnn-op-package-generator \
 
 ## Status
 
-✅ **Production Ready**
-
-All operators validated, accuracy maintained, ready for deployment.
+Production ready. All operators validated, accuracy maintained within tolerance.

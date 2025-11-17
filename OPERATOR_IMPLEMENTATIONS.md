@@ -181,7 +181,7 @@ def furthest_point_sample(xyz, npoint):
 - ✅ Clean, readable implementation
 - ✅ ONNX compatible
 - ❌ ~8× slower (iterative, not parallelizable)
-- ℹ️ Most impactful for QNN custom op
+- NOTE Most impactful for QNN custom op
 
 ---
 
@@ -410,7 +410,7 @@ class PointNet2Backbone(nn.Module):
 - ✅ Works directly on point clouds
 - ❌ ~2× slower, higher memory usage
 - ✅ Comparable accuracy
-- ℹ️ Most significant architectural change
+- NOTE Most significant architectural change
 
 ---
 
@@ -448,7 +448,7 @@ def voxelize_point_cloud(points, voxel_size):
 - ✅ ONNX compatible
 - ✅ Explicit voxel management
 - ❌ Not needed for PointNet++ (works on raw points)
-- ℹ️ Utility function for dense conversion if needed
+- NOTE Utility function for dense conversion if needed
 
 ---
 

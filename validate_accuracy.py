@@ -116,7 +116,7 @@ def validate_pytorch_model(num_tests=10, num_points=10000):
 
         # Print results
         for stat in stats:
-            status = "✓ PASS" if stat['passed'] else "✗ FAIL"
+            status = "PASS PASS" if stat['passed'] else "FAIL FAIL"
             print(f"  {stat['name']:20s} | Max: {stat['max_abs_error']:.2e} | Mean: {stat['mean_abs_error']:.2e} | {status}")
 
         results.extend(stats)
@@ -143,7 +143,7 @@ def validate_onnx_vs_pytorch(onnx_path, num_tests=10, num_points=10000, toleranc
 
     # Check if ONNX file exists
     if not os.path.exists(onnx_path):
-        print(f"✗ ONNX model not found: {onnx_path}")
+        print(f"FAIL ONNX model not found: {onnx_path}")
         print("  Please export model first with: python export_to_onnx.py")
         return []
 
@@ -151,11 +151,11 @@ def validate_onnx_vs_pytorch(onnx_path, num_tests=10, num_points=10000, toleranc
     try:
         import onnxruntime as ort
     except ImportError:
-        print("✗ ONNXRuntime not installed. Install with: pip install onnxruntime")
+        print("FAIL ONNXRuntime not installed. Install with: pip install onnxruntime")
         return []
 
     ort_session = ort.InferenceSession(onnx_path)
-    print(f"✓ Loaded ONNX model: {onnx_path}")
+    print(f"PASS Loaded ONNX model: {onnx_path}")
 
     # Create PyTorch model
     model = GraspNetONNXInference(
@@ -166,7 +166,7 @@ def validate_onnx_vs_pytorch(onnx_path, num_tests=10, num_points=10000, toleranc
         half_views=False
     )
     model.eval()
-    print("✓ Created PyTorch model")
+    print("PASS Created PyTorch model")
 
     results = []
 
@@ -199,7 +199,7 @@ def validate_onnx_vs_pytorch(onnx_path, num_tests=10, num_points=10000, toleranc
 
         # Print results
         for stat in stats:
-            status = "✓ PASS" if stat['passed'] else "✗ FAIL"
+            status = "PASS PASS" if stat['passed'] else "FAIL FAIL"
             print(f"  {stat['name']:20s} | Max: {stat['max_abs_error']:.2e} | Mean: {stat['mean_abs_error']:.2e} | {status}")
 
         results.extend(stats)
@@ -233,7 +233,7 @@ def print_summary(results):
         passed_count = sum(1 for s in stats if s['passed'])
         total_count = len(stats)
 
-        status = "✓" if passed_count == total_count else "✗"
+        status = "PASS" if passed_count == total_count else "FAIL"
         print(f"\n{name}:")
         print(f"  Max absolute error:  {max_abs:.2e}")
         print(f"  Mean absolute error: {mean_abs:.2e}")
@@ -245,9 +245,9 @@ def print_summary(results):
     # Final verdict
     print("\n" + "="*80)
     if all_passed:
-        print("✓ ALL TESTS PASSED - Accuracy is maintained!")
+        print("PASS ALL TESTS PASSED - Accuracy is maintained!")
     else:
-        print("✗ SOME TESTS FAILED - Review errors above")
+        print("FAIL SOME TESTS FAILED - Review errors above")
     print("="*80)
 
     return all_passed
@@ -277,7 +277,7 @@ def save_results(results, output_path='VALIDATION_RESULTS.md'):
             mean_abs = np.mean([s['mean_abs_error'] for s in stats])
             passed_count = sum(1 for s in stats if s['passed'])
             total_count = len(stats)
-            status = "✓ PASS" if passed_count == total_count else "✗ FAIL"
+            status = "PASS PASS" if passed_count == total_count else "FAIL FAIL"
 
             f.write(f"| {name} | {max_abs:.2e} | {mean_abs:.2e} | {status} |\n")
 
@@ -291,7 +291,7 @@ def save_results(results, output_path='VALIDATION_RESULTS.md'):
                 f.write(f"- Max relative error: {s['max_rel_error']:.2e}\n")
                 f.write(f"- Status: {'PASS' if s['passed'] else 'FAIL'}\n\n")
 
-    print(f"\n✓ Results saved to {output_path}")
+    print(f"\nPASS Results saved to {output_path}")
 
 
 def main():
@@ -328,7 +328,7 @@ def main():
         )
     else:
         # Just validate PyTorch consistency
-        print("\nℹ No ONNX model provided, testing PyTorch consistency only")
+        print("\nINFO No ONNX model provided, testing PyTorch consistency only")
         print("  To test ONNX: python validate_accuracy.py --onnx_model path/to/model.onnx")
         results = validate_pytorch_model(
             num_tests=args.num_tests,

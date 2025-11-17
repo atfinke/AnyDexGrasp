@@ -75,13 +75,13 @@ def export_to_onnx(model, save_path, input_shape=(1, 20000, 3), opset_version=11
             }
         )
 
-    print(f"✓ Export successful")
+    print(f"Export successful")
 
     # Verify ONNX model
     print("\nVerifying ONNX model...")
     onnx_model = onnx.load(save_path)
     onnx.checker.check_model(onnx_model)
-    print("✓ Verification passed")
+    print("Verification passed")
 
     # Print model info
     file_size_mb = os.path.getsize(save_path) / (1024 ** 2)
@@ -136,7 +136,7 @@ def main():
         num_depth=args.num_depth,
         half_views=args.half_views
     )
-    print("✓ Model created")
+    print("Model created")
 
     # Export
     input_shape = (args.batch_size, args.input_points, 3)
