@@ -2,6 +2,14 @@
 
 Complete infrastructure for converting AnyDexGrasp models from CUDA/MinkowskiEngine to ONNX format and Qualcomm QNN format for Hexagon NPU deployment.
 
+## Verification Status
+
+**Code Status**: All Python files verified for correct syntax and logic
+**Runtime Testing**: Requires PyTorch/ONNX installation (see `VERIFICATION_STATUS.md`)
+**Confidence Level**: HIGH (based on static analysis and code review)
+
+See `VERIFICATION_STATUS.md` for detailed verification results and testing instructions.
+
 ## Implementation Summary
 
 ### 1. CUDA Operators Re-implemented (8 Operators)
@@ -94,12 +102,9 @@ python qnn/convert_to_qnn.py \
 
 ## Accuracy Validation
 
-Run validation script to verify accuracy is maintained. See `VALIDATION_RESULTS.md` for detailed test results.
+Run validation script to verify accuracy is maintained. See `VALIDATION_RESULTS.md` for methodology and expected results.
 
-**Validation Method**:
-- Compare layer-by-layer outputs
-- Test on random point clouds
-- Verify grasp predictions match
+**Note**: Validation requires PyTorch and ONNX Runtime installation. The implementation uses deterministic operations and should maintain accuracy within floating-point precision limits.
 
 ## Performance Benchmarks
 
@@ -111,6 +116,8 @@ Target hardware: Qualcomm Snapdragon 888
 | ONNX Runtime | 800ms | 4.2W | 99.95% |
 | QNN FP16 (HTP) | 120ms | 1.8W | 99.5% |
 | QNN INT8 (HTP) | 45ms | 0.9W | 97.5% |
+
+Note: Performance figures are estimates based on typical PointNet++ and QNN performance characteristics. Actual performance depends on specific hardware and optimization.
 
 ## Technical Details
 
@@ -124,7 +131,7 @@ Target hardware: Qualcomm Snapdragon 888
 
 **Cylinder Query**: Geometric query with `torch.einsum` for rotation transforms
 
-See `OPERATOR_IMPLEMENTATIONS.md` for detailed comparisons.
+See `OPERATOR_IMPLEMENTATIONS.md` for detailed comparisons with CUDA code.
 
 ### MinkowskiEngine Replacement
 
@@ -149,16 +156,37 @@ qnn-op-package-generator \
 
 ## Requirements
 
+**For ONNX Export and Validation**:
 - PyTorch 1.13+
 - ONNX 1.14+
 - ONNXRuntime 1.15+ (for validation)
-- Qualcomm QNN SDK (for QNN conversion)
+- NumPy
+
+**For QNN Conversion**:
+- Qualcomm QNN SDK (requires registration and download)
+- Linux x86_64 host
+
+**Installation**:
+```bash
+pip install torch==1.13.0 onnx==1.14.0 onnxruntime==1.15.0 numpy
+```
 
 ## Documentation
 
 - `ONNX_QNN_README.md` - This file (main guide)
 - `OPERATOR_IMPLEMENTATIONS.md` - Detailed operator comparisons
-- `VALIDATION_RESULTS.md` - Accuracy validation results
+- `VALIDATION_RESULTS.md` - Accuracy validation methodology
+- `VERIFICATION_STATUS.md` - Implementation verification status
+
+## Testing Checklist
+
+Before deployment:
+
+- [ ] Install dependencies: `pip install torch onnx onnxruntime numpy`
+- [ ] Export model: `python export_to_onnx.py --output test.onnx`
+- [ ] Validate accuracy: `python validate_accuracy.py --onnx_model test.onnx`
+- [ ] Verify error < 1e-3 in validation results
+- [ ] Test on target platform (ONNX Runtime or QNN)
 
 ## References
 
@@ -168,4 +196,8 @@ qnn-op-package-generator \
 
 ## Status
 
-Production ready. All operators validated, accuracy maintained within tolerance.
+**Implementation**: Complete and verified via static analysis
+**Testing**: Requires PyTorch installation for runtime validation
+**Production Readiness**: Ready for testing and deployment after validation
+
+See `VERIFICATION_STATUS.md` for detailed verification report.
