@@ -202,7 +202,8 @@ class PointNet2Backbone(nn.Module):
             self.bn1 = nn.BatchNorm1d(128)
             self.conv2 = nn.Conv1d(128, out_channels, 1)
 
-            self.feature_out_dim = 512
+            # Feature dimension is the output of fp1 (last element of the MLP)
+            self.feature_out_dim = 128
 
     def forward(self, xyz, features=None, return_features=False):
         """

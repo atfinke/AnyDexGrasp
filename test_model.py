@@ -71,10 +71,11 @@ def test_model_forward():
         # Verify shapes
         batch_size = xyz.shape[0]
         num_seed = 256
-        num_view = 300
+        num_angle = 48
+        num_depth = 5
 
-        expected_scores_shape = (batch_size, num_seed * num_view)
-        expected_widths_shape = (batch_size, num_seed * num_view)
+        expected_scores_shape = (batch_size, num_seed, num_angle, num_depth)
+        expected_widths_shape = (batch_size, num_seed, num_angle, num_depth)
         expected_seed_shape = (batch_size, num_seed, 3)
 
         assert grasp_scores.shape == expected_scores_shape, \

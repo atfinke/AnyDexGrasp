@@ -247,18 +247,14 @@ class GraspNetONNX(nn.Module):
         self.half_views = half_views
 
         # Backbone: PointNet++ instead of MinkowskiEngine
-        if half_views:
-            self.heatmap_generator = PointNet2Backbone(
-                in_channels=in_channels, out_channels=3,
-                feature_dim=128, half_views=True
-            )
-            feature_dim = 128
-        else:
-            self.heatmap_generator = PointNet2Backbone(
-                in_channels=in_channels, out_channels=3,
-                feature_dim=512, half_views=False
-            )
-            feature_dim = 512
+        self.heatmap_generator = PointNet2Backbone(
+            in_channels=in_channels, out_channels=3,
+            feature_dim=512 if not half_views else 128,
+            half_views=half_views
+        )
+
+        # Get actual feature dimension from backbone (not the parameter)
+        feature_dim = self.heatmap_generator.feature_out_dim
 
         # View estimator
         self.view_estimator = ViewEstimatorONNX(
