@@ -35,6 +35,8 @@ class PointNetSetAbstraction(nn.Module):
         self.group_all = group_all
 
         # MLP layers
+        # For group_all, in_channel doesn't include grouped xyz (not concatenated)
+        # For normal SA, in_channel should already include the +3 from caller
         self.mlp_convs = nn.ModuleList()
         self.mlp_bns = nn.ModuleList()
         last_channel = in_channel
@@ -57,7 +59,7 @@ class PointNetSetAbstraction(nn.Module):
 
         if self.group_all:
             new_xyz = xyz.mean(dim=1, keepdim=True)  # (B, 1, 3)
-            new_points = points.unsqueeze(-1)  # (B, C, N, 1)
+            new_points = points.unsqueeze(2)  # (B, C, 1, N) - group all points together
         else:
             # Sample points using FPS
             fps_idx = furthest_point_sample(xyz, self.npoint)  # (B, npoint)
@@ -163,10 +165,10 @@ class PointNet2Backbone(nn.Module):
         if half_views:
             # Lightweight version
             # Set abstraction layers (encoder)
-            self.sa1 = PointNetSetAbstraction(1024, 0.02, 32, in_channels, [32, 32, 64])
+            self.sa1 = PointNetSetAbstraction(1024, 0.02, 32, in_channels + 3, [32, 32, 64])
             self.sa2 = PointNetSetAbstraction(512, 0.04, 32, 64 + 3, [64, 64, 128])
             self.sa3 = PointNetSetAbstraction(256, 0.08, 32, 128 + 3, [128, 128, 128])
-            self.sa4 = PointNetSetAbstraction(None, None, None, 128 + 3, [128, 128, 128], group_all=True)
+            self.sa4 = PointNetSetAbstraction(None, None, None, 128, [128, 128, 128], group_all=True)
 
             # Feature propagation layers (decoder)
             self.fp4 = PointNetFeaturePropagation(128 + 128, [128, 128])
@@ -183,10 +185,11 @@ class PointNet2Backbone(nn.Module):
         else:
             # Full version
             # Set abstraction layers (encoder)
-            self.sa1 = PointNetSetAbstraction(2048, 0.02, 32, in_channels, [64, 64, 128])
+            # in_channels accounts for concat of grouped xyz (3) + input features
+            self.sa1 = PointNetSetAbstraction(2048, 0.02, 32, in_channels + 3, [64, 64, 128])
             self.sa2 = PointNetSetAbstraction(1024, 0.04, 32, 128 + 3, [128, 128, 256])
             self.sa3 = PointNetSetAbstraction(512, 0.08, 32, 256 + 3, [256, 256, 512])
-            self.sa4 = PointNetSetAbstraction(None, None, None, 512 + 3, [512, 512, 512], group_all=True)
+            self.sa4 = PointNetSetAbstraction(None, None, None, 512, [512, 512, 512], group_all=True)
 
             # Feature propagation layers (decoder)
             self.fp4 = PointNetFeaturePropagation(512 + 512, [512, 512])
@@ -227,11 +230,11 @@ class PointNet2Backbone(nn.Module):
         l3_xyz, l3_points = self.sa3(l2_xyz, l2_points)
         l4_xyz, l4_points = self.sa4(l3_xyz, l3_points)
 
-        # Feature propagation layers
-        l3_points = self.fp4(l3_xyz, l4_xyz, l3_points, l4_points)
-        l2_points = self.fp3(l2_xyz, l3_xyz, l2_points, l3_points)
-        l1_points = self.fp2(l1_xyz, l2_xyz, l1_points, l2_points)
-        l0_points_new = self.fp1(l0_xyz, l1_xyz, l0_points, l1_points)
+        # Feature propagation layers (upsample from low res to high res)
+        l3_points = self.fp4(l4_xyz, l3_xyz, l4_points, l3_points)  # 1 -> 512 points
+        l2_points = self.fp3(l3_xyz, l2_xyz, l3_points, l2_points)  # 512 -> 1024 points
+        l1_points = self.fp2(l2_xyz, l1_xyz, l2_points, l1_points)  # 1024 -> 2048 points
+        l0_points_new = self.fp1(l1_xyz, l0_xyz, l1_points, l0_points)  # 2048 -> N points
 
         # Feature for grasp detection
         feature_output = l0_points_new

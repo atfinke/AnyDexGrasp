@@ -177,6 +177,9 @@ def three_interpolate(features, idx, weight):
     B, C, M = features.shape
     N = idx.shape[1]
 
+    # Ensure idx is long type for gather
+    idx = idx.long()
+
     # Gather features for 3 nearest neighbors
     # idx: (B, N, 3) -> (B, N*3)
     idx_flat = idx.view(B, -1)  # (B, N*3)
@@ -187,7 +190,8 @@ def three_interpolate(features, idx, weight):
     gathered = gathered.view(B, C, N, 3)  # (B, C, N, 3)
 
     # Apply weights and sum
-    weight_expanded = weight.permute(0, 2, 1).unsqueeze(1)  # (B, 1, N, 3)
+    # weight: (B, N, 3) -> (B, 1, N, 3)
+    weight_expanded = weight.unsqueeze(1)  # (B, 1, N, 3)
     output = torch.sum(gathered * weight_expanded, dim=-1)  # (B, C, N)
 
     return output
